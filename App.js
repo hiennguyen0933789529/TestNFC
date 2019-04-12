@@ -14,11 +14,10 @@ import { RNCamera } from 'react-native-camera';
 import postApi from './src/api/postApi';
 const {height, width} = Dimensions.get('window');
 //import CryptoJS from 'crypto-js';
-const crypto = require('crypto-js');
-const RSAKey = require('react-native-rsa');
 import {RSA, RSAKeychain} from 'react-native-rsa-native';
-
+//import NodeRSA from './src/api/nodeRsa';
 //const NodeRSA = require('node-rsa');
+const {RSAmodules} = NativeModules;
 
 export default class App extends Component {
     constructor(props) {
@@ -52,8 +51,6 @@ export default class App extends Component {
     }
 
     onBarCodeRead(scanResult) {
-      // console.warn(scanResult.type);
-      // console.warn(scanResult.data);
       if (scanResult.data != null) {
         if (!this.barcodeCodes.includes(scanResult.data)) {
           this.barcodeCodes.push(scanResult.data);
@@ -68,27 +65,55 @@ export default class App extends Component {
             "storeId": "001",
             "storeName": "Cua hang doi tac"
           };
-//'-----BEGIN PUBLIC KEY-----'+'-----END PUBLIC KEY-----'
-          var publickey='MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAgP8nP97p9gVZLrhGgRGv'+
-                        'Ki/7QOIxJeTFPZ3iayoq6YwpRcK0wF5mdzFmO4cD0IvWdHIKdEbcT7xaHIfnYPvC'+
-                        'IdFfKAhomFTJTKcsM3Jz2rJOBoKr8yatqS4AT+0HIf7x6jyHgLOCWcAchfzh2fqT'+
-                        'rk2Gqw9qPHS9rIo+MKG4hSi9CoUc4TfLYday01gVuFN9o778pEqrW7Wr/OwLIY+p'+
-                        '+2m0zKtiSanJw6UJnN9eB++3xII+Z5ollTf8o5Fimid1PlYRPThTw1SCQEW94Ly9'+
-                        'q/up4VP0+0oG8+gCtY6WskgiPnatT5ZgRoQTvcj4QcmlaHez31kStCWlFMEW6eEx'+
-                        '+FM2a1E6uk221I+UMdlFXvdyRZatsyFzFe1e9Qjj04kOWFSCdzo48AwnGOsLWUNN'+
-                        'EYjOEK/JZbLHJoRmvlKUkbCQBQglcPpBf7rtOEa7/3k2P9xp10H0lwRDfKWhNRvR'+
-                        'pgU2Yt3C7lARBeXNboLmCVjs82bdvVrAIhyoixSoWx0yxBpmg/b+Ad9iquI4qQHe'+
-                        '7zuma4K0NmaQ/7q1xtpxxq3w20WeADcPgAKtSrmKTlL+/o5+tp2Os4DWBNXz2WVe'+
-                        'dejQBFjKL6xQqxsNAiKvy7fn74rDr7QKTX1ctMxC5EvvwxKPRwQw8EVLy0SkQcF9'+
-                        'iQwG+VmN6M2NDSpGU5OoFN8CAwEAAQ==';
-          RSA.encrypt(JSON.stringify(jsonData), publickey)
-           .then(encodedMessage => {
-             console.log(encodedMessage);
-             RSA.decrypt(encodedMessage, publickey)
-               .then(message => {
-                 console.log(message);
-               });
-             });
+
+          var publickey="MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAgP8nP97p9gVZLrhGgRGvKi/7QOIxJeTFPZ3iayoq6YwpRcK0wF5mdzFmO4cD0IvWdHIKdEbcT7xaHIfnYPvCIdFfKAhomFTJTKcsM3Jz2rJOBoKr8yatqS4AT+0HIf7x6jyHgLOCWcAchfzh2fqTrk2Gqw9qPHS9rIo+MKG4hSi9CoUc4TfLYday01gVuFN9o778pEqrW7Wr/OwLIY+p+2m0zKtiSanJw6UJnN9eB++3xII+Z5ollTf8o5Fimid1PlYRPThTw1SCQEW94Ly9q/up4VP0+0oG8+gCtY6WskgiPnatT5ZgRoQTvcj4QcmlaHez31kStCWlFMEW6eEx+FM2a1E6uk221I+UMdlFXvdyRZatsyFzFe1e9Qjj04kOWFSCdzo48AwnGOsLWUNNEYjOEK/JZbLHJoRmvlKUkbCQBQglcPpBf7rtOEa7/3k2P9xp10H0lwRDfKWhNRvRpgU2Yt3C7lARBeXNboLmCVjs82bdvVrAIhyoixSoWx0yxBpmg/b+Ad9iquI4qQHe7zuma4K0NmaQ/7q1xtpxxq3w20WeADcPgAKtSrmKTlL+/o5+tp2Os4DWBNXz2WVedejQBFjKL6xQqxsNAiKvy7fn74rDr7QKTX1ctMxC5EvvwxKPRwQw8EVLy0SkQcF9iQwG+VmN6M2NDSpGU5OoFN8CAwEAAQ==";
+          RSAmodules.encrypt(JSON.stringify(jsonData),publickey).then(
+            encrypt =>{
+              console.log(encrypt);
+              let url = 'https://test-payment.momo.vn/pay/pos';
+              let params = {
+                  "partnerCode": "MOMOSH2Q20190410",
+                  "partnerRefId": "Merchant123556666",
+                  "description": "thanh toan MoMo POS DFM",
+                  "hash": encrypt,
+                  "version": 2
+                  };
+              postApi(url,params).then(
+                  data => {
+                    this.setState({response:data});
+                    console.log('response',data);
+                  });
+              let decrypt = RSAmodules.decrypt(encrypt,publickey);
+              console.log('  ',decrypt);
+            }
+          )
+          // RSA.generate()
+          //   .then(keys => {
+          //   // console.log(keys.private) // the private key
+          //   // console.log(keys.public) // the public key
+          //   RSA.encrypt(JSON.stringify(jsonData), keys.public)
+          //     .then(encodedMessage => {
+          //       let url = 'https://test-payment.momo.vn/pay/pos';
+          //       let params = {
+          //           "partnerCode": "MOMOSH2Q20190410",
+          //           "partnerRefId": "Merchant123556666",
+          //           "description": "thanh toan MoMo POS DFM",
+          //           "hash": encodedMessage,
+          //           "version": 2
+          //           };
+          //       postApi(url,params).then(
+          //           data => {
+          //             this.setState({response:data});
+          //             console.log('response',data);
+          //           });
+          //       console.log(encodedMessage);
+          //       RSA.decrypt(encodedMessage, keys.private)
+          //         .then(message => {
+          //           console.log(message);
+          //         })
+          //       })
+          //     });
+
           // var message = crypto.AES.encrypt(JSON.stringify(jsonData), publickey).toString();
           // // Xem chuỗi đã mã hóa
           // console.log(message);
