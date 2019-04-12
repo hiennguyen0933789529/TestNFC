@@ -1,6 +1,7 @@
 
 import React, { Component } from 'react';
 import {
+  NativeModules,
     Dimensions,
     View,
     Text,
@@ -8,12 +9,16 @@ import {
     TouchableOpacity,
     Linking
 } from 'react-native';
-//import NfcManager, {NdefParser} from 'react-native-nfc-manager';
+
 import { RNCamera } from 'react-native-camera';
 import postApi from './src/api/postApi';
-const NodeRSA = require('node-rsa');
 const {height, width} = Dimensions.get('window');
+//import CryptoJS from 'crypto-js';
+const crypto = require('crypto-js');
+const RSAKey = require('react-native-rsa');
+import {RSA, RSAKeychain} from 'react-native-rsa-native';
 
+//const NodeRSA = require('node-rsa');
 
 export default class App extends Component {
     constructor(props) {
@@ -21,6 +26,7 @@ export default class App extends Component {
         this.camera = null;
         this.barcodeCodes = [];
         this.state = {
+            keypublic:'',
             supported: true,
             enabled: false,
             QRcode:'',
@@ -55,52 +61,73 @@ export default class App extends Component {
           this.setState({QRcode:scanResult.data});
           console.log("QRcode",scanResult.data);
           let jsonData = {
-            "partnerCode": "MOMOIQA420180417",
+            "partnerCode": "MOMOSH2Q20190410",
             "partnerRefId": "Merchant123556666",
-            "amount": 10000,
+            "amount": 30000,
             "paymentCode": scanResult.data,
             "storeId": "001",
             "storeName": "Cua hang doi tac"
           };
-          let publicKey = '-----BEGIN PUBLIC KEY-----'+'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkpa+qMXS6O11x7jBGo9W3yxeHEsAdyDE40UoXhoQf9K6attSIclTZMEGfq6gmJm2BogVJtPkjvri5/j9mBntA8qKMzzanSQaBEbr8FyByHnf226dsLt1RbJSMLjCd3UC1n0Yq8KKvfHhvmvVbGcWfpgfo7iQTVmL0r1eQxzgnSq31EL1yYNMuaZjpHmQuT24Hmxl9W9enRtJyVTUhwKhtjOSOsR03sMnsckpFT9pn1/V9BE2Kf3rFGqc6JukXkqK6ZW9mtmGLSq3K+JRRq2w8PVmcbcvTr/adW4EL2yc1qk9Ec4HtiDhtSYd6/ov8xLVkKAQjLVt7Ex3/agRPfPrNwIDAQAB'+'-----END PUBLIC KEY-----';
-          console.log(publicKey,jsonData);
-          // let publicKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkpa+qMXS6O11x7jBGo9W3yxeHEsAdyDE40UoXhoQf9K6attSIclTZMEGfq6gmJm2BogVJtPkjvri5/j9mBntA8qKMzzanSQaBEbr8FyByHnf226dsLt1RbJSMLjCd3UC1n0Yq8KKvfHhvmvVbGcWfpgfo7iQTVmL0r1eQxzgnSq31EL1yYNMuaZjpHmQuT24Hmxl9W9enRtJyVTUhwKhtjOSOsR03sMnsckpFT9pn1/V9BE2Kf3rFGqc6JukXkqK6ZW9mtmGLSq3K+JRRq2w8PVmcbcvTr/adW4EL2yc1qk9Ec4HtiDhtSYd6/ov8xLVkKAQjLVt7Ex3/agRPfPrNwIDAQAB';
-          // RSA.generate().then(keys => {
-          // // console.log("keys.private 1",keys.private) // the private key
-          // console.log("keys.public 1",keys.public) // the public key
-          // RSA.encrypt(JSON.stringify(hash), keys.public).then(encodedMessage => {
-          //   console.log("hash",encodedMessage);
-          //   let url = 'https://test-payment.momo.vn/pay/pos';
-          //   let params = {
-          //     "partnerCode": "MOMOIQA420180417",
+//'-----BEGIN PUBLIC KEY-----'+'-----END PUBLIC KEY-----'
+          var publickey='MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAgP8nP97p9gVZLrhGgRGv'+
+                        'Ki/7QOIxJeTFPZ3iayoq6YwpRcK0wF5mdzFmO4cD0IvWdHIKdEbcT7xaHIfnYPvC'+
+                        'IdFfKAhomFTJTKcsM3Jz2rJOBoKr8yatqS4AT+0HIf7x6jyHgLOCWcAchfzh2fqT'+
+                        'rk2Gqw9qPHS9rIo+MKG4hSi9CoUc4TfLYday01gVuFN9o778pEqrW7Wr/OwLIY+p'+
+                        '+2m0zKtiSanJw6UJnN9eB++3xII+Z5ollTf8o5Fimid1PlYRPThTw1SCQEW94Ly9'+
+                        'q/up4VP0+0oG8+gCtY6WskgiPnatT5ZgRoQTvcj4QcmlaHez31kStCWlFMEW6eEx'+
+                        '+FM2a1E6uk221I+UMdlFXvdyRZatsyFzFe1e9Qjj04kOWFSCdzo48AwnGOsLWUNN'+
+                        'EYjOEK/JZbLHJoRmvlKUkbCQBQglcPpBf7rtOEa7/3k2P9xp10H0lwRDfKWhNRvR'+
+                        'pgU2Yt3C7lARBeXNboLmCVjs82bdvVrAIhyoixSoWx0yxBpmg/b+Ad9iquI4qQHe'+
+                        '7zuma4K0NmaQ/7q1xtpxxq3w20WeADcPgAKtSrmKTlL+/o5+tp2Os4DWBNXz2WVe'+
+                        'dejQBFjKL6xQqxsNAiKvy7fn74rDr7QKTX1ctMxC5EvvwxKPRwQw8EVLy0SkQcF9'+
+                        'iQwG+VmN6M2NDSpGU5OoFN8CAwEAAQ==';
+          RSA.encrypt(JSON.stringify(jsonData), publickey)
+           .then(encodedMessage => {
+             console.log(encodedMessage);
+             RSA.decrypt(encodedMessage, publickey)
+               .then(message => {
+                 console.log(message);
+               });
+             });
+          // var message = crypto.AES.encrypt(JSON.stringify(jsonData), publickey).toString();
+          // // Xem chuỗi đã mã hóa
+          // console.log(message);
+          // var bytes = crypto.AES.decrypt(message, publickey);
+          // // Chuyển sang chuỗi gốc
+
+          // var rsa = new RSAKey();
+          // rsa.setPublicString(publickey);
+          // var originText = 'sample String Value';
+          // var encrypted = rsa.encrypt(originText);
+          // console.log(encrypted);
+          // console.log(bytes);// 'my message'
+
+          // let url = 'https://test-payment.momo.vn/pay/pos';
+          // let params = {
+          //     "partnerCode": "MOMOSH2Q20190410",
           //     "partnerRefId": "Merchant123556666",
           //     "description": "thanh toan MoMo POS DFM",
-          //     "hash": encodedMessage,
+          //     "hash": message,
           //     "version": 2
           //     };
-          //   postApi(url,params).then(
+          // postApi(url,params).then(
           //     data => {
           //       this.setState({response:data});
           //       console.log('response',data);
           //     });
-          //     RSA.decrypt(encodedMessage,keys.private).then(message => {
-          //     console.log("message 2",message);
-          //     })
-          //   })
-          // });
           }
         }
       }
 
     render() {
-        let { supported, enabled, tag, QRcode, response } = this.state;
+        let { supported, enabled, tag, QRcode, response,keypublic   } = this.state;
         return (
-          <View style={styles.container}>
+          <View style={{flex:1}}>
             <View style={{alignItems: 'center',height:(height/2), width }}>
               <Text style={{ marginTop: 5 }}> {`Current QRcode JSON: ${JSON.stringify(QRcode)}`}</Text>
-              <Text style={{ marginTop: 5 }}> {`Current datarespon JSON: ${JSON.stringify(response)}`}</Text>
-              </View>
-
+              <Text style={{ marginTop: 5 }}> {`Current QRcode JSON: ${JSON.stringify(response)}`}</Text>
+            </View>
+            <View style={{alignItems: 'center',height:(height/2), width }}>
               <RNCamera
                   ref={ref => {
                     this.camera = ref;
@@ -119,188 +146,9 @@ export default class App extends Component {
                   style={{justifyContent:"center",height:(width/2), width:(width/2)}}
                   type={this.state.camera.type}
               />
-
+            </View>
           </View>
+
         )
     }
-
-    // _startNfc() {
-    //     NfcManager.start({
-    //         onSessionClosedIOS: () => {
-    //             console.log('ios session closed');
-    //         }
-    //     })
-    //         .then(result => {
-    //             console.log('start OK', result);
-    //         })
-    //         .catch(error => {
-    //             console.warn('start fail', error);
-    //             this.setState({supported: false});
-    //         })
-    //
-    //     if (Platform.OS === 'android') {
-    //         NfcManager.getLaunchTagEvent()
-    //             .then(tag => {
-    //                 console.log('launch tag', tag);
-    //                 if (tag) {
-    //                     this.setState({ tag });
-    //                 }
-    //             })
-    //             .catch(err => {
-    //                 console.log(err);
-    //             })
-    //         NfcManager.isEnabled()
-    //             .then(enabled => {
-    //                 this.setState({ enabled });
-    //             })
-    //             .catch(err => {
-    //                 console.log(err);
-    //             })
-    //     }
-    // }
-    //
-    // _onTagDiscovered = tag => {
-    //     console.log('Tag Discovered', tag.id);
-    //     this.setState({ tag });
-    //     // let url = this._parseUri(tag);
-    //     // if (url) {
-    //     //     Linking.openURL(url)
-    //     //         .catch(err => {
-    //     //             console.warn(err);
-    //     //         })
-    //     // }
-    // }
-    //
-    // _startDetection = () => {
-    //     NfcManager.registerTagEvent(this._onTagDiscovered)
-    //         .then(result => {
-    //             console.log('registerTagEvent OK', result)
-    //         })
-    //         .catch(error => {
-    //             console.warn('registerTagEvent fail', error)
-    //         })
-    // }
-    //
-    // _stopDetection = () => {
-    //     NfcManager.unregisterTagEvent()
-    //         .then(result => {
-    //             console.log('unregisterTagEvent OK', result)
-    //         })
-    //         .catch(error => {
-    //             console.warn('unregisterTagEvent fail', error)
-    //         })
-    // }
-    //
-    // _clearMessages = () => {
-    //     this.setState({tag: null});
-    // }
-    //
-    // _goToNfcSetting = () => {
-    //     if (Platform.OS === 'android') {
-    //         NfcManager.goToNfcSetting()
-    //             .then(result => {
-    //                 console.log('goToNfcSetting OK', result)
-    //             })
-    //             .catch(error => {
-    //                 console.warn('goToNfcSetting fail', error)
-    //             })
-    //     }
-    // }
-    //
-    // _parseUri = (tag) => {
-    //     let result = NdefParser.parseUri(tag.ndefMessage[0]),
-    //         uri = result && result.uri;
-    //     if (uri) {
-    //         console.log('parseUri: ' + uri);
-    //         return uri;
-    //     }
-    //     return null;
-    // }
 }
-
-const styles = {
-  container: {
-    flex: 1
-  },
-  preview: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center'
-  },
-  overlay: {
-    position: 'absolute',
-    padding: 16,
-    right: 0,
-    left: 0,
-    alignItems: 'center'
-  },
-  topOverlay: {
-    top: 0,
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  bottomOverlay: {
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  enterBarcodeManualButton: {
-    padding: 15,
-    backgroundColor: 'white',
-    borderRadius: 40
-  },
-  scanScreenMessage: {
-    fontSize: 14,
-    color: 'white',
-    textAlign: 'center',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }
-};
-
-
-// import React, {Component} from 'react';
-// import {Platform, StyleSheet, Text, View} from 'react-native';
-//
-// const instructions = Platform.select({
-//   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-//   android:
-//     'Double tap R on your keyboard to reload,\n' +
-//     'Shake or press menu button for dev menu',
-// });
-//
-// type Props = {};
-// export default class App extends Component<Props> {
-//   render() {
-//     return (
-//       <View style={styles.container}>
-//         <Text style={styles.welcome}>Welcome to React Native!</Text>
-//         <Text style={styles.instructions}>To get started, edit App.js</Text>
-//         <Text style={styles.instructions}>{instructions}</Text>
-//       </View>
-//     );
-//   }
-// }
-//
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     backgroundColor: '#F5FCFF',
-//   },
-//   welcome: {
-//     fontSize: 20,
-//     textAlign: 'center',
-//     margin: 10,
-//   },
-//   instructions: {
-//     textAlign: 'center',
-//     color: '#333333',
-//     marginBottom: 5,
-//   },
-// });

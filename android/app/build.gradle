@@ -108,6 +108,7 @@ android {
         versionCode 1
         versionName "1.0"
         missingDimensionStrategy 'react-native-camera', 'general'
+        multiDexEnabled true
     }
     signingConfigs {
         release {
@@ -150,6 +151,7 @@ android {
 }
 
 dependencies {
+    implementation project(':react-native-rsa-native')
     implementation project(':react-native-fs')
     implementation project(':react-native-device-info')
     implementation project(':react-native-gesture-handler')

@@ -4,6 +4,7 @@ import android.app.Application;
 
 import org.pgsqlite.SQLitePluginPackage;
 import com.facebook.react.ReactApplication;
+import com.RNRSA.RNRSAPackage;
 import com.rnfs.RNFSPackage;
 import com.learnium.RNDeviceInfo.RNDeviceInfo;
 import com.swmansion.gesturehandler.react.RNGestureHandlerPackage;
@@ -29,6 +30,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNRSAPackage(),
             new RNFSPackage(),
             new RNDeviceInfo(),
             new RNGestureHandlerPackage(),
