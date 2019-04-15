@@ -1,6 +1,7 @@
 
 import React, { Component } from 'react';
 import {
+  Alert,
   NativeModules,
     Dimensions,
     View,
@@ -17,7 +18,7 @@ const {height, width} = Dimensions.get('window');
 import {RSA, RSAKeychain} from 'react-native-rsa-native';
 //import NodeRSA from './src/api/nodeRsa';
 //const NodeRSA = require('node-rsa');
-const {RSAmodules} = NativeModules;
+const {PaygateModules} = NativeModules;
 
 export default class App extends Component {
     constructor(props) {
@@ -36,6 +37,7 @@ export default class App extends Component {
       	       flashMode: RNCamera.Constants.FlashMode.auto,
       	       barcodeFinderVisible: true
                },
+            hash:'',
 
         }
     }
@@ -65,28 +67,46 @@ export default class App extends Component {
             "storeId": "001",
             "storeName": "Cua hang doi tac"
           };
-
+          let url = 'https://test-payment.momo.vn/pay/pos';
           var publickey="MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAgP8nP97p9gVZLrhGgRGvKi/7QOIxJeTFPZ3iayoq6YwpRcK0wF5mdzFmO4cD0IvWdHIKdEbcT7xaHIfnYPvCIdFfKAhomFTJTKcsM3Jz2rJOBoKr8yatqS4AT+0HIf7x6jyHgLOCWcAchfzh2fqTrk2Gqw9qPHS9rIo+MKG4hSi9CoUc4TfLYday01gVuFN9o778pEqrW7Wr/OwLIY+p+2m0zKtiSanJw6UJnN9eB++3xII+Z5ollTf8o5Fimid1PlYRPThTw1SCQEW94Ly9q/up4VP0+0oG8+gCtY6WskgiPnatT5ZgRoQTvcj4QcmlaHez31kStCWlFMEW6eEx+FM2a1E6uk221I+UMdlFXvdyRZatsyFzFe1e9Qjj04kOWFSCdzo48AwnGOsLWUNNEYjOEK/JZbLHJoRmvlKUkbCQBQglcPpBf7rtOEa7/3k2P9xp10H0lwRDfKWhNRvRpgU2Yt3C7lARBeXNboLmCVjs82bdvVrAIhyoixSoWx0yxBpmg/b+Ad9iquI4qQHe7zuma4K0NmaQ/7q1xtpxxq3w20WeADcPgAKtSrmKTlL+/o5+tp2Os4DWBNXz2WVedejQBFjKL6xQqxsNAiKvy7fn74rDr7QKTX1ctMxC5EvvwxKPRwQw8EVLy0SkQcF9iQwG+VmN6M2NDSpGU5OoFN8CAwEAAQ==";
-          RSAmodules.encrypt(JSON.stringify(jsonData),publickey).then(
-            encrypt =>{
-              console.log(encrypt);
-              let url = 'https://test-payment.momo.vn/pay/pos';
-              let params = {
-                  "partnerCode": "MOMOSH2Q20190410",
-                  "partnerRefId": "Merchant123556666",
-                  "description": "thanh toan MoMo POS DFM",
-                  "hash": encrypt,
-                  "version": 2
-                  };
-              postApi(url,params).then(
-                  data => {
-                    this.setState({response:data});
-                    console.log('response',data);
-                  });
-              let decrypt = RSAmodules.decrypt(encrypt,publickey);
-              console.log('  ',decrypt);
-            }
-          )
+
+          PaygateModules.paygate(jsonData.partnerCode,jsonData.partnerRefId,jsonData.amount,jsonData.paymentCode,jsonData.storeId,jsonData.storeName,publickey,hash => {
+            //Alert.alert("hash",hash);
+            console.log(hash);
+            let params = {
+                    "partnerCode": "MOMOIQA420180417",
+                    "partnerRefId": "Merchant123556666",
+                    "description": "thanh toan MoMo POS DFM",
+                    "hash": hash,
+                    "version": 2
+                    };
+                postApi(url,params).then(
+                    data => {
+                      this.setState({response:data});
+                      //console.log('response',data);
+                    });
+          });
+
+          // RSAmodules.encrypt(JSON.stringify(jsonData),publickey).then(
+          //   encrypt =>{
+          //     console.log(encrypt);
+          //     let url = 'https://test-payment.momo.vn/pay/pos';
+          //     let params = {
+          //         "partnerCode": "MOMOSH2Q20190410",
+          //         "partnerRefId": "Merchant123556666",
+          //         "description": "thanh toan MoMo POS DFM",
+          //         "hash": encrypt,
+          //         "version": 2
+          //         };
+          //     postApi(url,params).then(
+          //         data => {
+          //           this.setState({response:data});
+          //           console.log('response',data);
+          //         });
+          //     let decrypt = RSAmodules.decrypt(encrypt,publickey);
+          //     console.log('  ',decrypt);
+          //   }
+          //)
           // RSA.generate()
           //   .then(keys => {
           //   // console.log(keys.private) // the private key
@@ -145,7 +165,7 @@ export default class App extends Component {
       }
 
     render() {
-        let { supported, enabled, tag, QRcode, response,keypublic   } = this.state;
+        let { supported, enabled, tag, QRcode, response,keypublic ,hash  } = this.state;
         return (
           <View style={{flex:1}}>
             <View style={{alignItems: 'center',height:(height/2), width }}>

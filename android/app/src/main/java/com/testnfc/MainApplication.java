@@ -14,7 +14,7 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 import com.facebook.soloader.SoLoader;
-import rsa.RSAmodulesPackage;
+import paygate.PaygateModulesPackage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +38,7 @@ public class MainApplication extends Application implements ReactApplication {
             new RNCameraPackage(),
             new NfcManagerPackage(),
             new SQLitePluginPackage(),
-            new RSAmodulesPackage()
+            new PaygateModulesPackage()
       );
     }
 
