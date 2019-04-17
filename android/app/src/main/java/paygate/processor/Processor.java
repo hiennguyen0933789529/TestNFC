@@ -235,12 +235,12 @@ public class Processor {
     public static String generateRSA(String partnerCode, String partnerRefId, Double amount, String paymentCode, String storeId, String storeName, String publicKey) throws Exception {
         // current version of Parameter key name is 2.0
     	Map<String, Object> rawData = new HashMap<>();
-    	rawData.put("partnerCode", partnerCode);
-    	rawData.put("partnerRefId", partnerRefId);
-    	rawData.put("amount", amount);
-    	rawData.put("paymentCode", paymentCode);
-    	rawData.put("storeId", storeId);
-    	rawData.put("storeName", storeName);
+        rawData.put(Parameter.PARTNER_CODE, partnerCode);
+        rawData.put(Parameter.PARTNER_REF_ID, partnerRefId);
+        rawData.put(Parameter.AMOUNT, amount);
+        rawData.put("paymentCode", paymentCode);
+        rawData.put("storeId", storeId);
+        rawData.put("storeName", storeName);
 
     	Gson gson = new Gson();
     	String jsonStr = gson.toJson(rawData);
