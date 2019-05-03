@@ -13,7 +13,6 @@ const postApi = async (url, params) => {
     );
       const res = await response.json();
       return res;
-    // }
   } catch (error) {
     return {connection: false };
   }

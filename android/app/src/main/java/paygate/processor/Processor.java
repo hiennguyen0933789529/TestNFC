@@ -232,8 +232,9 @@ public class Processor {
     /**
      * @author nhat.nguyen
      */
-    public static String generateRSA(String partnerCode, String partnerRefId, Double amount, String paymentCode, String storeId, String storeName, String publicKey) throws Exception {
+    public static String generateRSA(String partnerCode, String partnerRefId, long amount, String paymentCode, String storeId, String storeName, String publicKey) throws Exception {
         // current version of Parameter key name is 2.0
+
     	Map<String, Object> rawData = new HashMap<>();
         rawData.put(Parameter.PARTNER_CODE, partnerCode);
         rawData.put(Parameter.PARTNER_REF_ID, partnerRefId);
@@ -246,6 +247,6 @@ public class Processor {
     	String jsonStr = gson.toJson(rawData);
 	    byte[] testByte = jsonStr.getBytes("UTF-8");
 	    final String hash = Encoder.encryptRSA(testByte, publicKey);
-	    return hash;
+	    return hash.replaceAll("\n","");
     }
 }

@@ -55,26 +55,28 @@ export default class App extends Component {
     onBarCodeRead(scanResult) {
       if (scanResult.data != null) {
         if (!this.barcodeCodes.includes(scanResult.data)) {
+          console.log("scanResult",scanResult);
           this.barcodeCodes.push(scanResult.data);
           console.warn('onBarCodeRead call');
           this.setState({QRcode:scanResult.data});
           console.log("QRcode",scanResult.data);
           let jsonData = {
             "partnerCode": "MOMOSH2Q20190410",
-            "partnerRefId": "Merchant123556666",
-            "amount": 30000,
+            "partnerRefId": "213132132132",
+            "amount": 80000,
             "paymentCode": scanResult.data,
             "storeId": "001",
             "storeName": "Cua hang doi tac"
           };
           let url = 'https://test-payment.momo.vn/pay/pos';
           var publickey="MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAgP8nP97p9gVZLrhGgRGvKi/7QOIxJeTFPZ3iayoq6YwpRcK0wF5mdzFmO4cD0IvWdHIKdEbcT7xaHIfnYPvCIdFfKAhomFTJTKcsM3Jz2rJOBoKr8yatqS4AT+0HIf7x6jyHgLOCWcAchfzh2fqTrk2Gqw9qPHS9rIo+MKG4hSi9CoUc4TfLYday01gVuFN9o778pEqrW7Wr/OwLIY+p+2m0zKtiSanJw6UJnN9eB++3xII+Z5ollTf8o5Fimid1PlYRPThTw1SCQEW94Ly9q/up4VP0+0oG8+gCtY6WskgiPnatT5ZgRoQTvcj4QcmlaHez31kStCWlFMEW6eEx+FM2a1E6uk221I+UMdlFXvdyRZatsyFzFe1e9Qjj04kOWFSCdzo48AwnGOsLWUNNEYjOEK/JZbLHJoRmvlKUkbCQBQglcPpBf7rtOEa7/3k2P9xp10H0lwRDfKWhNRvRpgU2Yt3C7lARBeXNboLmCVjs82bdvVrAIhyoixSoWx0yxBpmg/b+Ad9iquI4qQHe7zuma4K0NmaQ/7q1xtpxxq3w20WeADcPgAKtSrmKTlL+/o5+tp2Os4DWBNXz2WVedejQBFjKL6xQqxsNAiKvy7fn74rDr7QKTX1ctMxC5EvvwxKPRwQw8EVLy0SkQcF9iQwG+VmN6M2NDSpGU5OoFN8CAwEAAQ==";
-          PaygateModules.paygate(jsonData.partnerCode,jsonData.partnerRefId,jsonData.amount,jsonData.paymentCode,jsonData.storeId,jsonData.storeName,publickey,hash => {
+
+          PaygateModules.init(jsonData.partnerCode,jsonData.partnerRefId,jsonData.amount,scanResult.data,jsonData.storeId,jsonData.storeName,publickey,hash => {
             //Alert.alert("hash",hash);
             console.log(hash);
             let params = {
                     "partnerCode": "MOMOSH2Q20190410",
-                    "partnerRefId": "Merchant123556666",
+                    "partnerRefId": "213132132132",
                     "description": "thanh toan MoMo POS DFM",
                     "hash": hash,
                     "version": 2
@@ -82,7 +84,7 @@ export default class App extends Component {
                 postApi(url,params).then(
                     data => {
                       this.setState({response:data});
-                      //console.log('response',data);
+                      console.log('response',data);
                     });
           });
 
