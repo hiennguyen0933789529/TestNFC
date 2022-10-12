@@ -22,7 +22,7 @@
     "react-native-nfc-manager": "^1.2.2",
     "react-native-rsa": "0.0.3",
     "react-native-rsa-native": "^1.0.24",
-    "react-native-sqlite-storage": "^3.3.10",
+    "react-native-sqlite-storage": "^3.3.11",
     "react-navigation": "^3.6.1"
   },
   "devDependencies": {
